@@ -24,8 +24,7 @@ NUMBER_OF_CONSECUTIVE_FACE_ID = 50 # this is the number of consecutive faces in 
 TIME_FOR_UNKNOWN_FACE = 20 # this is the time in seconds that is given to the unknown face to show QrCode
 ALARM_SECONDS = 5 # set alarm for 5 seconds
 
-SEGMENT_DURATION = 10 # duration of saving videos in seconds
-FOURCC = cv2.VideoWriter_fourcc(*'XVID')
+SEGMENT_DURATION = 30 # duration of saving videos in seconds
 arduino_address = 0x08
 sda_pin = 8
 scl_pin = 9
@@ -151,16 +150,21 @@ class CameraSaver:
         t.start()
 
     def loop(self):
-        filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S.avi")
-        out = cv2.VideoWriter(f'/home/pi/videos/{filename}.avi', FOURCC, 20.0, (640, 480))
+        filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        out = cv2.VideoWriter(f'/home/pi/videos/{filename}.avi', cv2.VideoWriter_fourcc(*'DIVX'), 20.0, (640, 480))
         start_time = time.time()
         while True:
-            time.sleep(1/30)
+            cv2.waitKey(1)
             CameraSaver.camera_frame = cam.capture_array()
-            out.write(CameraSaver.camera_frame)
+            if CameraSaver.camera_frame is not None:
+                out.write(cv2.resize(CameraSaver.camera_frame, (640,480)))
+            else:
+                print("[Rpi Frame is None]")
             if time.time() - start_time >= SEGMENT_DURATION:
-                print("[Video Released]")
+                print("[Video Released]####################################")
+                time.sleep(0.3)
                 out.release()
-                filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S.avi")
-                out = cv2.VideoWriter(f'/home/pi/videos/{filename}.avi', FOURCC, 20.0, (640,480))
-                start_time = time.time()        
+                time.sleep(0.3)
+                filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                out = cv2.VideoWriter(f'/home/pi/videos/{filename}.avi', cv2.VideoWriter_fourcc(*'DIVX'), 20.0, (640,480))
+                start_time = time.time()

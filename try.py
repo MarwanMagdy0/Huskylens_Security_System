@@ -45,12 +45,12 @@ class MainProgram:
 
     def handle_servo(self):
         self.servo_value += SERVO_STEP * self.servo_sign
-        if self.servo_value >=1:
-            self.servo_sign =-1
-            self.servo_value = 1
-        elif self.servo_value <=-1:
-            self.servo_sign = 1
-            self.servo_value = -1
+        if self.servo_value >=1.5:
+            self.servo_sign =-1.5
+            self.servo_value = 1.5
+        elif self.servo_value <=-1.5:
+            self.servo_sign = 1.5
+            self.servo_value = -1.5
         servo.value = self.servo_value
         print(f"Servo Value: {round(self.servo_value, 2)}", flush=True)
 
