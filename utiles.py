@@ -1,15 +1,17 @@
 from huskylib import HuskyLensLibrary
 from playsound import playsound
 from picamera2 import Picamera2
+from datetime import datetime
 from collections import deque
 from threading import Thread
 from gpiozero import Buzzer
 from gpiozero import Servo
 import smbus2 as smbus
+
 import time
 import cv2
 import os
-
+os.makedirs("/home/pi/videos", exist_ok=True)
 face_id2zone = {1 : 1, 2 : 2} # {face_id : zone}
 buzzer = Buzzer(17)
 
@@ -22,7 +24,8 @@ NUMBER_OF_CONSECUTIVE_FACE_ID = 50 # this is the number of consecutive faces in 
 TIME_FOR_UNKNOWN_FACE = 20 # this is the time in seconds that is given to the unknown face to show QrCode
 ALARM_SECONDS = 5 # set alarm for 5 seconds
 
-
+SEGMENT_DURATION = 10 # duration of saving videos in seconds
+FOURCC = cv2.VideoWriter_fourcc(*'XVID')
 arduino_address = 0x08
 sda_pin = 8
 scl_pin = 9
@@ -87,7 +90,7 @@ class SecurityMethods:
         start_time = time.time()
         buzzer.beep(0.5, 0.5)
         while time.time() - start_time < TIME_FOR_UNKNOWN_FACE:
-            frame = cam.capture_array()
+            frame = CameraSaver.camera_frame
             qr_data = get_qr_code_data(frame)
             if qr_data == "f851256dff2a8825ad4af615111b6a4f":
                 print("[Security Check] person identified", flush=True)
@@ -139,3 +142,25 @@ def threaded_sound_play(audio_file_path):
     # Play the sound
     t = Thread(target=playsound, args=(audio_file_path, ))
     t.start()
+
+
+class CameraSaver:
+    camera_frame = cam.capture_array()
+    def __init__(self):
+        t = Thread(target=self.loop)
+        t.start()
+
+    def loop(self):
+        filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S.avi")
+        out = cv2.VideoWriter(f'/home/pi/videos/{filename}.avi', FOURCC, 20.0, (640, 480))
+        start_time = time.time()
+        while True:
+            time.sleep(1/30)
+            CameraSaver.camera_frame = cam.capture_array()
+            out.write(CameraSaver.camera_frame)
+            if time.time() - start_time >= SEGMENT_DURATION:
+                print("[Video Released]")
+                out.release()
+                filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S.avi")
+                out = cv2.VideoWriter(f'/home/pi/videos/{filename}.avi', FOURCC, 20.0, (640,480))
+                start_time = time.time()        

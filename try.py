@@ -30,6 +30,7 @@ class MainProgram:
 
     def run(self):
         while True:
+            time.sleep(1/30) # lock the loop at 30fps
             blocks = hl.blocks()
 
             for block in blocks:
@@ -40,7 +41,6 @@ class MainProgram:
                 self.queue.pop_first()
 
             self.handle_faces()
-            time.sleep(1/30) # lock the loop at 30fps
             self.handle_servo()
 
     def handle_servo(self):
@@ -71,5 +71,6 @@ class MainProgram:
 
 if __name__ == "__main__":
     ZoneHandeler()
+    CameraSaver()
     main_programe = MainProgram()
     main_programe.run()
