@@ -127,6 +127,7 @@ class ZoneHandeler:
 
     @staticmethod
     def zone_serial_thread_loop():
+        moving_sign = True
         try:
             ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
             ser.flush()
@@ -140,7 +141,12 @@ class ZoneHandeler:
                 if ser.in_waiting > 0:
                     line = ser.readline().decode('utf-8').rstrip()
                     print("Serial Recv:", line, flush=True)
-                    SecurityMethods.zone = int(line)
+                    if line == "Zone Changed":
+                        if SecurityMethods.zone == 3:
+                            moving_sign = -1
+                        elif SecurityMethods.zone == 1:
+                            moving_sign = 1
+                        SecurityMethods.zone += 1 * moving_sign
             except:
                 print("Error: Problem with serial data", flush=True)
 
