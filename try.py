@@ -1,15 +1,25 @@
 from utiles import *
 import subprocess
 
+def is_device_present(bus, address):
+    try:
+        # Write a dummy byte to see if the device acknowledges
+        bus.write_byte(address, 0)
+        return True
+    except OSError:
+        return False
+
 # Run the command and capture the output
-output = ""
-while "32" not in output:
-    output = subprocess.check_output("sudo i2cdetect -y 1", shell=True, universal_newlines=True)
-    print("Device 32 not found.")
-    buzzer.on()
-    time.sleep(0.5)
-    buzzer.off()
-    time.sleep(1)
+address = 0x32
+bus_number = 1
+
+with smbus.SMBus(bus_number) as bus:
+    while not is_device_present(bus, address):
+        print("Device 32 not found.")
+        buzzer.on()
+        time.sleep(0.5)
+        buzzer.off()
+        time.sleep(1)
 
 hl= HuskyLensLibrary("I2C","",address=0x32)
 hl.algorthim("ALGORITHM_FACE_RECOGNITION")
@@ -45,12 +55,12 @@ class MainProgram:
 
     def handle_servo(self):
         self.servo_value += SERVO_STEP * self.servo_sign
-        if self.servo_value >=1.5:
-            self.servo_sign =-1.5
-            self.servo_value = 1.5
-        elif self.servo_value <=-1.5:
-            self.servo_sign = 1.5
-            self.servo_value = -1.5
+        if self.servo_value >=1:
+            self.servo_sign =-1
+            self.servo_value = 1
+        elif self.servo_value <=-1:
+            self.servo_sign = 1
+            self.servo_value = -1
         servo.value = self.servo_value
         print(f"Servo Value: {round(self.servo_value, 2)}", flush=True)
 

@@ -7,7 +7,7 @@ from threading import Thread
 from gpiozero import Buzzer
 from gpiozero import Servo
 import smbus2 as smbus
-
+import serial
 import time
 import cv2
 import os
@@ -20,7 +20,7 @@ cam = Picamera2()
 cam.configure(cam.create_preview_configuration(main={"format": 'RGB888', "size": (640, 480)}))
 cam.start()
 
-NUMBER_OF_CONSECUTIVE_FACE_ID = 50 # this is the number of consecutive faces in the queue on which if the consecutive ids exceeds this number there is an action that will be taken
+NUMBER_OF_CONSECUTIVE_FACE_ID = 20 # this is the number of consecutive faces in the queue on which if the consecutive ids exceeds this number there is an action that will be taken
 TIME_FOR_UNKNOWN_FACE = 20 # this is the time in seconds that is given to the unknown face to show QrCode
 ALARM_SECONDS = 5 # set alarm for 5 seconds
 
@@ -122,20 +122,27 @@ class SecurityMethods:
 
 class ZoneHandeler:
     def __init__(self):
-        t = Thread(target=ZoneHandeler.zone_i2c_thread_loop)
+        t = Thread(target=ZoneHandeler.zone_serial_thread_loop)
         t.start()
 
     @staticmethod
-    def zone_i2c_thread_loop():
-        bus = smbus.SMBus(1)
+    def zone_serial_thread_loop():
+        try:
+            ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+            ser.flush()
+        except:
+            print("Error: Could not open serial port", flush=True)
+            return
+
         while True:
             time.sleep(0.1)
             try:
-                data = bus.read_byte(arduino_address)
-                print("I2C Recv:", data, flush=True)
-                SecurityMethods.zone = int(data)
+                if ser.in_waiting > 0:
+                    line = ser.readline().decode('utf-8').rstrip()
+                    print("Serial Recv:", line, flush=True)
+                    SecurityMethods.zone = int(line)
             except:
-                print("Error: Arduino not detected or data problem", flush=True)
+                print("Error: Problem with serial data", flush=True)
 
 def threaded_sound_play(audio_file_path):
     # Play the sound
