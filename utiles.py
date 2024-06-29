@@ -93,12 +93,12 @@ class SecurityMethods:
             qr_data = get_qr_code_data(frame)
             if qr_data == "f851256dff2a8825ad4af615111b6a4f":
                 print("[Security Check] person identified", flush=True)
-                threaded_sound_play("/home/pi/HUSKYLENS/person_identified.mp3")
+                threaded_sound_play(["/home/pi/HUSKYLENS/person_identified.mp3"])
                 buzzer.off()
                 break
         else:
             print("[Security Alarm] unrecognized person", flush=True)
-            threaded_sound_play("/home/pi/HUSKYLENS/You_are_not_in_the_database.mp3")
+            threaded_sound_play(["/home/pi/HUSKYLENS/You_are_not_in_the_database.mp3"])
             buzzer.off()
             SecurityMethods.alarm_for_n_seconds(ALARM_SECONDS)
 
@@ -106,7 +106,7 @@ class SecurityMethods:
     def check_this_face_is_in_its_zone(face_id):
         if face_id2zone[face_id] != SecurityMethods.zone:
             print("please go to your zone", flush=True)
-            threaded_sound_play("/home/pi/HUSKYLENS/please_go_to_your_zone.mp3")
+            threaded_sound_play(["/home/pi/HUSKYLENS/please_go_to_your_zone.mp3"])
             SecurityMethods.alarm_for_n_seconds(2, 1, 0.5)
 
     @staticmethod
@@ -150,9 +150,13 @@ class ZoneHandeler:
             except:
                 print("Error: Problem with serial data", flush=True)
 
-def threaded_sound_play(audio_file_path):
+def threaded_sound_play(audio_file_paths : list):
     # Play the sound
-    t = Thread(target=playsound, args=(audio_file_path, ))
+    def playsound_thread(audio_file_paths: list):
+        for audio_file_path in audio_file_paths:
+            playsound(audio_file_path)
+    
+    t = Thread(target=playsound_thread, args=(audio_file_paths, ))
     t.start()
 
 
